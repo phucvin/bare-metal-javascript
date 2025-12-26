@@ -1,17 +1,21 @@
-PREFIX = /opt/riscv-newlib/bin/riscv64-unknown-elf-
+PREFIX = riscv64-unknown-elf-
 CC = $(PREFIX)gcc
 AS = $(PREFIX)as
 LD = $(PREFIX)ld
 
-CFLAGS = -march=rv64imac_zicsr -mabi=lp64 -mcmodel=medany -specs=nosys.specs -O2 -g -Wall
-LDFLAGS = -T link.ld -nostartfiles 
+# -D_GNU_SOURCE is often needed for mquickjs
+# -fno-math-errno -fno-trapping-math are suggested in mquickjs makefile
+CFLAGS = -march=rv64imac_zicsr -mabi=lp64 -mcmodel=medany -Iinclude -O2 -g -Wall \
+         -D_GNU_SOURCE -fno-math-errno -fno-trapping-math
 
-SRCS = js.c elk.c uart.c
+LDFLAGS = -T link.ld -nostartfiles -nostdlib
+
+SRCS = js.c uart.c mquickjs.c cutils.c dtoa.c libm.c libc_stubs.c
 ASRCS = startup.S
 OBJS = $(SRCS:.c=.o) $(ASRCS:.S=.o)
 
 firmware.elf: $(OBJS) link.ld
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EXTRA) -o $@ $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_EXTRA) -o $@ $(OBJS) -lgcc
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
